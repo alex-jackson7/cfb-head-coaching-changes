@@ -1,0 +1,14 @@
+```{r}
+library(tidyverse)
+library(readr)
+library(dplyr)
+```
+
+```{r}
+csv21 <- read_csv("Data/cfb21.csv")
+coach13 <- read_csv("Data/2013_Coaches.csv")
+coach21 <- read_csv("Data/2021_Coaches.csv")
+head(coach21)
+```
+
+
