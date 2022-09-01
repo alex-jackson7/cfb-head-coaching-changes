@@ -7,8 +7,43 @@ library(dplyr)
 ```{r}
 csv21 <- read_csv("Data/cfb21.csv")
 coach13 <- read_csv("Data/2013_Coaches.csv")
+coach14 <- read_csv("Data/2014_Coaches.csv")
+coach15 <- read_csv("Data/2015_Coaches.csv")
+coach16 <- read_csv("Data/2016_Coaches.csv")
+coach17 <- read_csv("Data/2017_Coaches.csv")
+coach18 <- read_csv("Data/2018_Coaches.csv")
+coach19 <- read_csv("Data/2019_Coaches.csv")
+coach20 <- read_csv("Data/2020_Coaches.csv")
 coach21 <- read_csv("Data/2021_Coaches.csv")
-head(coach21)
+cfb13 <- read_csv("Data/cfb13.csv") %>% 
+  mutate(Year = 2013)
+cfb14 <- read_csv("Data/cfb14.csv") %>% 
+  mutate(Year = 2014)
+cfb15 <- read_csv("Data/cfb15.csv") %>% 
+  mutate(Year = 2015)
+cfb16 <- read_csv("Data/cfb16.csv") %>% 
+  mutate(Year = 2016)
+cfb17 <- read_csv("Data/cfb17.csv") %>% 
+  mutate(Year = 2017)
+cfb18 <- read_csv("Data/cfb18.csv") %>% 
+  mutate(Year = 2018)
+cfb19 <- read_csv("Data/cfb19.csv") %>% 
+  mutate(Year = 2019)
+cfb20 <- read_csv("Data/cfb20.csv") %>% 
+  mutate(Year = 2020)
+cfb21 <- read_csv("Data/cfb21.csv") %>% 
+  mutate(Year = 2021)
+cfb_data <- bind_rows(cfb13, cfb14, cfb15, cfb16, cfb17, cfb18, cfb19, cfb20)
+coach_data <- bind_rows(coach13, coach14, coach15, coach16, coach17, coach18, coach19, coach20, coach21)
+head(coach_data)
+names(coach_data)[3] <- "Team"
+cfb_data <- separate(cfb_data, col = "Team", into = c("Team", "Conference"), sep = "[(]")
+big_data <- full_join(cfb_data, coach_data)
 ```
+
+```{r}
+
+```
+
 
 
