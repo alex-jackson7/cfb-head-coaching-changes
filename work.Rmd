@@ -19,36 +19,95 @@ coach19 <- read_csv("Data/2019_Coaches.csv")
 coach20 <- read_csv("Data/2020_Coaches.csv")
 coach21 <- read_csv("Data/2021_Coaches.csv")
 cfb13 <- read_csv("Data/cfb13.csv") %>% 
-  mutate(Year = 2013)
+  mutate(Year = 2013) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb14 <- read_csv("Data/cfb14.csv") %>% 
-  mutate(Year = 2014)
+  mutate(Year = 2014) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb15 <- read_csv("Data/cfb15.csv") %>% 
-  mutate(Year = 2015)
+  mutate(Year = 2015) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb16 <- read_csv("Data/cfb16.csv") %>% 
-  mutate(Year = 2016)
+  mutate(Year = 2016) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb17 <- read_csv("Data/cfb17.csv") %>% 
-  mutate(Year = 2017)
+  mutate(Year = 2017) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb18 <- read_csv("Data/cfb18.csv") %>% 
-  mutate(Year = 2018)
+  mutate(Year = 2018) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb19 <- read_csv("Data/cfb19.csv") %>% 
-  mutate(Year = 2019)
+  mutate(Year = 2019) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb20 <- read_csv("Data/cfb20.csv") %>% 
-  mutate(Year = 2020)
+  mutate(Year = 2020) %>% 
+  separate(col = "Team", into = "Team", sep = " [(]")
 cfb21 <- read_csv("Data/cfb21.csv") %>% 
   mutate(Year = 2021) %>% 
-  select(-"...1")
+  select(-"...1") %>% 
+  separate(col = "Team", into = "Team", sep = " [(]") 
 names(cfb21) <- make.names(names(cfb21), unique=TRUE)
 cfb_data <- bind_rows(cfb13, cfb14, cfb15, cfb16, cfb17, cfb18, cfb19, cfb20, cfb21)
 coach_data <- bind_rows(coach13, coach14, coach15, coach16, coach17, coach18, coach19, coach20, coach21)
 head(coach_data)
 names(coach_data)[3] <- "Team"
-cfb_data <- separate(cfb_data, col = "Team", into = c("Team", "Conference"), sep = "[(]") %>% select(-c("...41", "Kickoff.Return.Def.Rank", "Opp.Kickoff.Returns", "Kickoff.Touchbacks", "Opponent.Kickoff.Return.Yards", "Opp.Kickoff.Return.Touchdowns.Allowed", "Avg.Yards.per.Kickoff.Return.Allowed", "Win.Loss", "NA.", "Interceptions.Thrown.y"))
-cfb_data$Conference <-gsub(")","",as.character(cfb_data$Conference))
-cfb_data[cfb_data$Team == "Miami" & cfb_data$Conference == "OH ", "Team"] <- "Miami (OH)"
+cfb_data <- cfb_data %>% select(-c("...41", "Kickoff.Return.Def.Rank", "Opp.Kickoff.Returns", "Kickoff.Touchbacks", "Opponent.Kickoff.Return.Yards", "Opp.Kickoff.Return.Touchdowns.Allowed", "Avg.Yards.per.Kickoff.Return.Allowed", "Win.Loss", "NA.", "Interceptions.Thrown.y"))
+#cfb_data$Conference <-gsub(")","",as.character(cfb_data$Conference))
+#cfb_data[(cfb_data$Team == "Miami") & (cfb_data$Conference == "OH "), "Team"] <- "Miami (OH)" #need to figure out miami
 coach_data <- coach_data %>% 
   filter(W + L > 6)
-big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year"))
+cfb_data[cfb_data == "App State"] <- "Appalachian State"
+cfb_data[cfb_data == "Appalachian St."] <- "Appalachian State"
+cfb_data[cfb_data == "Arizona St."] <- "Arizona State"
+cfb_data[cfb_data == "Arkansas St."] <- "Arkansas State"
+cfb_data[cfb_data == "Army West Point"] <- "Army"
+cfb_data[cfb_data == "Ball St."] <- "Ball State"
+cfb_data[cfb_data == "Boise St."] <- "Ball State"
+cfb_data[cfb_data == "Central Mich."] <- "Central Michigan"
+cfb_data[cfb_data == "Coastal Caro."] <- "Coastal Carolina"
+cfb_data[cfb_data == "Colorado St."] <- "Colorado State"
+cfb_data[cfb_data == "UConn"] <- "Connecticut"
+cfb_data[cfb_data == "Eastern Mich."] <- "Eastern Michigan"
+cfb_data[cfb_data == "Fla. Atlantic"] <- "Florida Atlantic"
+cfb_data[cfb_data == "FIU"] <- "Florida International"
+cfb_data[cfb_data == "Florida St."] <- "Florida State"
+cfb_data[cfb_data == "Fresno St."] <- "Fresno State"
+cfb_data[cfb_data == "Ga. Southern"] <- "Georgia Southern"
+cfb_data[cfb_data == "Georgia St."] <- "Georgia State"
+cfb_data[cfb_data == "Iowa St."] <- "Iowa State"
+cfb_data[cfb_data == "Kansas St."] <- "Kansas State"
+cfb_data[cfb_data == "Kent St."] <- "Kent State"
+cfb_data[cfb_data == "La.-Monroe"] <- "Louisiana-Monroe"
+cfb_data[cfb_data == "ULM"] <- "Louisiana-Monroe"
+cfb_data[cfb_data == "Michigan St."] <- "Michigan State"
+cfb_data[cfb_data == "Middle Tenn."] <- "Middle Tennessee State"
+cfb_data[cfb_data == "Mississippi St."] <- "Mississippi State"
+cfb_data[cfb_data == "New Mexico St."] <- "New Mexico State"
+cfb_data[cfb_data == "NIU"] <- "Norhtern Illinois"
+cfb_data[cfb_data == "Northern Ill."] <- "Norhtern Illinois"
+cfb_data[cfb_data == "Ohio St."] <- "Ohio State"
+cfb_data[cfb_data == "Oklahoma St."] <- "Oklahoma State"
+cfb_data[cfb_data == "Oregon St."] <- "Oregon State"
+cfb_data[cfb_data == "Penn St."] <- "Penn State"
+cfb_data[cfb_data == "San Diego St."] <- "San Diego State"
+cfb_data[cfb_data == "San Jose St."] <- "San Jose State"
+cfb_data[cfb_data == "South Fla."] <- "South Florida"
+cfb_data[cfb_data == "Southern Miss."] <- "Southern Mississippi"
+cfb_data[cfb_data == "Southern California"] <- "USC"
+cfb_data[cfb_data == "Western Mich."] <- "Western Michigan"
+cfb_data[cfb_data == "Western Ky."] <- "Western Kentucky"
+cfb_data[cfb_data == "Washington St."] <- "Washington State"
+cfb_data[cfb_data == "Utah St."] <- "Utah State"
+cfb_data[cfb_data == "Texas St."] <- "Texas State"
+coach_data[coach_data == "Bowling Green State"] <- "Bowling Green"
+coach_data[coach_data == "Brigham Young"] <- "BYU"
+coach_data[coach_data == "North Carolina State"] <- "NC State"
+coach_data[coach_data == "Pitt"] <- "Pittsburgh"
+big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>% 
+  select(c(Team, Coach, W, L, Year, Conf, Turnover.Margin, Touchdowns, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
 ```
+
+
 
 
 
