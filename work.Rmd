@@ -1,8 +1,12 @@
+
+
+
 ```{r}
 library(tidyverse)
 library(readr)
 library(dplyr)
 library(stringr)
+library(data.table)
 ```
 
 ```{r}
@@ -20,28 +24,60 @@ coach20 <- read_csv("Data/2020_Coaches.csv")
 coach21 <- read_csv("Data/2021_Coaches.csv")
 cfb13 <- read_csv("Data/cfb13.csv") %>% 
   mutate(Year = 2013) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb14 <- read_csv("Data/cfb14.csv") %>% 
   mutate(Year = 2014) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb15 <- read_csv("Data/cfb15.csv") %>% 
   mutate(Year = 2015) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb16 <- read_csv("Data/cfb16.csv") %>% 
   mutate(Year = 2016) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb17 <- read_csv("Data/cfb17.csv") %>% 
   mutate(Year = 2017) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb18 <- read_csv("Data/cfb18.csv") %>% 
   mutate(Year = 2018) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb19 <- read_csv("Data/cfb19.csv") %>% 
   mutate(Year = 2019) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb20 <- read_csv("Data/cfb20.csv") %>% 
   mutate(Year = 2020) %>% 
-  separate(col = "Team", into = "Team", sep = " [(]")
+  mutate(Team = case_when(
+    Team == "Miami (FL) (ACC)" ~ "Miami_FL (ACC)",
+    Team == "Miami (OH) (MAC)" ~ "Miami_OH (MAC)",
+    TRUE ~ Team
+  )) %>% separate(col = "Team", into = "Team", sep = " [(]")
 cfb21 <- read_csv("Data/cfb21.csv") %>% 
   mutate(Year = 2021) %>% 
   select(-"...1") %>% 
@@ -55,7 +91,7 @@ cfb_data <- cfb_data %>% select(-c("...41", "Kickoff.Return.Def.Rank", "Opp.Kick
 #cfb_data$Conference <-gsub(")","",as.character(cfb_data$Conference))
 #cfb_data[(cfb_data$Team == "Miami") & (cfb_data$Conference == "OH "), "Team"] <- "Miami (OH)" #need to figure out miami
 coach_data <- coach_data %>% 
-  filter(W + L > 6)
+  filter(W + L > 7)
 cfb_data[cfb_data == "App State"] <- "Appalachian State"
 cfb_data[cfb_data == "Appalachian St."] <- "Appalachian State"
 cfb_data[cfb_data == "Arizona St."] <- "Arizona State"
@@ -103,9 +139,54 @@ coach_data[coach_data == "Bowling Green State"] <- "Bowling Green"
 coach_data[coach_data == "Brigham Young"] <- "BYU"
 coach_data[coach_data == "North Carolina State"] <- "NC State"
 coach_data[coach_data == "Pitt"] <- "Pittsburgh"
+coach_data[coach_data == "Miami (FL)"] <- "Miami_FL"
+coach_data[coach_data == "Miami (OH)"] <- "Miami_OH"
 big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>% 
-  select(c(Team, Coach, W, L, Year, Conf, Turnover.Margin, Touchdowns, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
+  select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed, Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns, Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
 ```
+
+```{r}
+new_coach = c()
+big_data <- big_data %>% 
+  arrange(Team, Year)
+loop_data <- big_data %>% 
+    group_by(Team) 
+for (i in 2:nrow(big_data)){
+  if ((big_data$Team[i] == big_data$Team[i-1]) & (big_data$Coach[i] !=
+                                                  big_data$Coach[i-1])){
+    new_coach = append(new_coach, 1)
+  }
+  else{
+    new_coach = append(new_coach, 0)
+  }
+}
+
+big_data <- big_data[-1, ] %>% 
+  cbind(new_coach)
+big_data <- big_data %>% 
+  mutate(new_coach = as.factor(new_coach))
+
+old_data <- big_data %>% select(c("Turnover.Margin", "Touchdowns", "Scoring.Off.Rank"))
+new_data <- paste("lag", old_data, sep = ".")
+
+big_data <-
+  big_data %>% 
+  group_by(Team) %>% 
+  mutate(lastyr_TD = lag(Touchdowns, n = 1, default = NA),
+         lastyr_TOmargin = lag(Turnover.Margin, n = 1, default = NA),
+         lastyr_pct = lag(Pct, n = 1, default = NA),
+         lastyr_TD.allowed = lag(Off.TDs.Allowed, n = 1, default = NA),
+         delta_TD = Touchdowns - lastyr_TD,
+         delta_pct = Pct - lastyr_pct,
+         delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed) %>% 
+  filter(Conf %in% c("ACC", "Big Ten", "Big 12", "Pac-12", "SEC")) %>% 
+  filter(Year != 2013)
+  
+  
+lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
+summary(lm.1)
+```
+
 
 
 
