@@ -11,7 +11,7 @@ in the last ten seasons Our goal was to measure the impact that first year head 
 
 # Data Gathering and Cleaning
 
-```{r load packages}
+```{r load packages, echo=FALSE}
 library(tidyverse)
 library(readr)
 library(dplyr)
@@ -19,7 +19,7 @@ library(stringr)
 library(data.table)
 ```
 
-```{r load data}
+```{r load data, warning=FALSE, message = FALSE}
 csv21 <- read_csv("Data/cfb21.csv")
 coach13 <- read_csv("Data/2013_Coaches.csv")
 coach14 <- read_csv("Data/2014_Coaches.csv")
@@ -158,6 +158,8 @@ big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>%
   select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed, Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns, Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
 ```
 
+
+
 ```{r data analysis}
 new_coach = c()
 big_data <- big_data %>% 
@@ -200,6 +202,17 @@ lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
 summary(lm.1)
 ```
 
+```{r eda}
+
+big_data %>% 
+  ggplot(aes(x=Off.Rank, y=Def.Rank)) +geom_point(color = "red") +
+  gghighlight::gghighlight(new_coach == 1) +
+  scale_x_continuous(breaks = seq(0, 150, 10))+
+  scale_y_continuous(breaks = seq(0, 150, 10)) +
+  geom_vline(xintercept = 65, linetype ="dashed")+
+  geom_hline(yintercept = 65,  linetype ="dashed")
+
+```
 
 
 
