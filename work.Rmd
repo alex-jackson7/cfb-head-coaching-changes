@@ -6,7 +6,8 @@ output: "html_document"
 
 # Introduction
 
-Our project examines NCAA Division 1 football teams who made head coach changes in the last ten years. We were inspired by Duke's hiring and recent success of new head coach Mike Elko.
+Our project examines NCAA Division 1 football teams who made head coach changes 
+in the last ten years. 
 
 
 
@@ -199,6 +200,7 @@ big_data <-
 lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
 summary(lm.1)
 ```
+
 
 
 
