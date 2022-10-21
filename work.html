@@ -368,9 +368,14 @@ Coach Changes</h1>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>Our project examines NCAA Division 1 football teams who made head
-coach changes in the last ten years. We were inspired by Duke’s hiring
-and recent success of new head coach Mike Elko.</p>
-<pre class="r"><code>library(tidyverse)</code></pre>
+coaching changes in the last ten seasons Our goal was to measure the
+impact that first year head coaches have during their first season with
+a new team and compare it to the state of the team prior to their
+hiring. Our project was inspired by Duke’s recent head coach hiring of
+Mike Elko after numerous sub-par seasons.</p>
+</div>
+<div id="data-gathering-and-cleaning" class="section level1">
+<h1>Data Gathering and Cleaning</h1>
 <pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
 <pre><code>## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
 ## ✓ tibble  3.1.6     ✓ dplyr   1.0.8
@@ -379,10 +384,6 @@ and recent success of new head coach Mike Elko.</p>
 <pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>library(readr)
-library(dplyr)
-library(stringr)
-library(data.table)</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;data.table&#39;</code></pre>
 <pre><code>## The following objects are masked from &#39;package:dplyr&#39;:

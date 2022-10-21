@@ -6,11 +6,10 @@ output: "html_document"
 
 # Introduction
 
-Our project examines NCAA Division 1 football teams who made head coach changes 
-in the last ten years. 
+Our project examines NCAA Division 1 football teams who made head coaching changes 
+in the last ten seasons Our goal was to measure the impact that first year head coaches have during their first season with a new team and compare it to the state of the team prior to their hiring. Our project was inspired by Duke's recent head coach hiring of Mike Elko after numerous sub-par seasons. 
 
-
-
+# Data Gathering and Cleaning
 
 ```{r load packages}
 library(tidyverse)
