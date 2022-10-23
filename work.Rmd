@@ -11,6 +11,8 @@ in the last ten seasons Our goal was to measure the impact that first year head 
 
 # Data Gathering and Cleaning
 
+We started by gathering data from https://www.sports-reference.com/cfb/ which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with merge conflicts with the two datasets, we were able to combine our two datasets into one big dataset with the team and coach data.
+
 ```{r load packages, echo=FALSE}
 library(tidyverse)
 library(readr)
@@ -158,8 +160,6 @@ big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>%
   select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed, Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns, Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
 ```
 
-
-
 ```{r data analysis}
 new_coach = c()
 big_data <- big_data %>% 
@@ -191,6 +191,7 @@ big_data <-
          lastyr_TOmargin = lag(Turnover.Margin, n = 1, default = NA),
          lastyr_pct = lag(Pct, n = 1, default = NA),
          lastyr_TD.allowed = lag(Off.TDs.Allowed, n = 1, default = NA),
+         touchdown_difference = Touchdowns - lastyr_TD,
          delta_TD = Touchdowns - lastyr_TD,
          delta_pct = Pct - lastyr_pct,
          delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed) %>% 
@@ -203,7 +204,6 @@ summary(lm.1)
 ```
 
 ```{r eda}
-
 big_data %>% 
   ggplot(aes(x=Off.Rank, y=Def.Rank)) +geom_point(color = "red") +
   gghighlight::gghighlight(new_coach == 1) +
@@ -212,6 +212,12 @@ big_data %>%
   geom_vline(xintercept = 65, linetype ="dashed")+
   geom_hline(yintercept = 65,  linetype ="dashed")
 
+big_data %>% 
+  group_by(new_coach) %>% 
+  ggplot(aes(x = new_coach, y = touchdown_difference)) +
+  geom_boxplot() +
+  labs(title = "Touchdown Difference from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Touchdown Difference")
+  
 ```
 
 
