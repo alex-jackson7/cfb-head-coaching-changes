@@ -6,17 +6,18 @@ output: "html_document"
 
 # Introduction
 
-Our project examines NCAA Division 1 football teams who made head coaching changes in the last ten seasons. Our goal was to measure the impact that first year head coaches have during their first season with a new team and compare it to the state of the team prior to their hiring. Our project was inspired by the recent success Duke's football team has seen after the hiring of head coach Mike Elko after numerous sub-par seasons.
+Our project examines NCAA Division 1 football teams who made head coaching changes in the last ten seasons. Our goal is to measure the impact that first year head coaches have during their first season with a new team. We plan to do this by comparing various measures of success such as win percentage, touchdown differential, turnover differential, and offensive/defensive rank to the previous year under the old head coach Our project is inspired by the recent success Duke's football team has seen after the hiring of head coach Mike Elko after numerous sub-par seasons.
 
 # Data Gathering and Cleaning
 
-We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with merge conflicts with the two datasets, we were able to combine our two datasets into one big dataset with the team and coach data.
+We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with potential name issues that would result in difficulties merging them, we were able to combine our two datasets into one big dataset with the team and coach data.
 
 ```{r load packages, warning=FALSE, message=FALSE}
 #Load packages
 library(tidyverse)
 library(readr)
 library(dplyr)
+library(knitr)
 library(stringr)
 library(data.table)
 library(broom)
@@ -205,9 +206,7 @@ big_data <-
          lastyr_TOmargin = lag(Turnover.Margin, n = 1, default = NA),
          lastyr_pct = lag(Pct, n = 1, default = NA),
          lastyr_TD.allowed = lag(Off.TDs.Allowed, n = 1, default = NA),
-         touchdown_difference = Touchdowns - lastyr_TD,
-         win_pct_difference = Pct - lastyr_pct,
-         turnover_difference = Turnover.Margin - lastyr_TOmargin,
+         delta_TOmargin = Turnover.Margin - lastyr_TOmargin,
          delta_TD = Touchdowns - lastyr_TD,
          delta_pct = Pct - lastyr_pct,
          delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed) %>% 
@@ -215,7 +214,17 @@ big_data <-
   filter(Year != 2013)
   
 lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
-summary(lm.1)
+lm.2 <- lm(delta_TD.allowed ~ new_coach, data = big_data)
+lm.3 <- lm(delta_TD ~ new_coach, data = big_data)
+lm.4 <- lm(delta_TOmargin ~ new_coach, data = big_data)
+tidy(lm.1) %>% 
+  kable(digits = 3)
+tidy(lm.2) %>% 
+  kable(digits = 3)
+tidy(lm.3) %>% 
+  kable(digits = 3)
+tidy(lm.4) %>% 
+  kable(digits = 3)
 ```
 
 # Visualizations
@@ -231,7 +240,7 @@ big_data %>%
 
 big_data %>% 
   group_by(new_coach) %>% 
-  ggplot(aes(x = new_coach, y = touchdown_difference)) +
+  ggplot(aes(x = new_coach, y = delta_TD)) +
   geom_boxplot() +
   labs(title = "Touchdown Differencial from Previous Year", 
        subtitle = "Grouped by New Head Coach (1) or Returning (0)", 
@@ -239,7 +248,7 @@ big_data %>%
 
 big_data %>% 
   group_by(new_coach) %>% 
-  ggplot(aes(x = new_coach, y = win_pct_difference)) +
+  ggplot(aes(x = new_coach, y = delta_pct)) +
   geom_boxplot() +
   labs(title = "Win Percentage Difference from Previous Year", 
        subtitle = "Grouped by New Head Coach (1) or Returning (0)", 
@@ -247,41 +256,39 @@ big_data %>%
 
 big_data %>% 
   group_by(new_coach) %>% 
-  ggplot(aes(x = new_coach, y = turnover_difference)) +
+  ggplot(aes(x = new_coach, y = delta_TOmargin)) +
   geom_boxplot() +
   labs(title = "Turnover Differencial from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Turnover Difference")
 ```
 
 ```{r}
-test_data <- big_data %>% 
-  mutate(include = case_when(
-    new_coach == 1 ~ 1,
-    lead(new_coach, 1) == 1 ~ 1,
-    T ~ 0
-  )) %>% 
-  filter(include == 1) %>%
-  mutate(group_no = 0)
+#test_data <- big_data %>% 
+  #mutate(include = case_when(
+    #new_coach == 1 ~ 1,
+    #lead(new_coach, 1) == 1 ~ 1,
+    #T ~ 0
+  #)) %>% 
+  #filter(include == 1) %>%
+  #mutate(group_no = 0)
 
-for(i in seq(1, nrow(test_data), 2)){
-  test_data[i, 34] = i
-  test_data[i+1, 34] = i
-  i = i+2
-}
+#for(i in seq(1, nrow(test_data), 2)){
+  #test_data[i, 34] = i
+  #test_data[i+1, 34] = i
+  #i = i+2
+#}
 
-test_data %>% 
-  ggplot(aes(x=Off.Rank, y=Def.Rank, color = new_coach)) + 
-  geom_point(aes(fill = new_coach), size = 1) +
-  geom_line(aes(group = group_no), 
-              color = "gray",
-              alpha = .5,
-              arrow = arrow(type = "closed",
-                    length = (unit(.0075, "inches")))) +
-  scale_x_continuous(breaks = seq(0, 150, 10)) +
-  scale_y_continuous(breaks = seq(0, 150, 10)) +
-  geom_vline(xintercept = 65, linetype ="dashed") +
-  geom_hline(yintercept = 65, linetype ="dashed")
-
-
+#test_data %>% 
+  #ggplot(aes(x=Off.Rank, y=Def.Rank, color = new_coach)) + 
+  #geom_point(aes(fill = new_coach), size = 1) +
+  #geom_line(aes(group = group_no), 
+              #color = "gray",
+              #alpha = .5,
+              #arrow = arrow(type = "closed",
+                    #length = (unit(.0075, "inches")))) +
+  #scale_x_continuous(breaks = seq(0, 150, 10)) +
+  #scale_y_continuous(breaks = seq(0, 150, 10)) +
+  #geom_vline(xintercept = 65, linetype ="dashed") +
+  #geom_hline(yintercept = 65, linetype ="dashed")
 ```
 
 
