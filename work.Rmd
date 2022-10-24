@@ -13,16 +13,19 @@ in the last ten seasons Our goal was to measure the impact that first year head 
 
 We started by gathering data from https://www.sports-reference.com/cfb/ which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with merge conflicts with the two datasets, we were able to combine our two datasets into one big dataset with the team and coach data.
 
-```{r load packages}
+```{r load packages, warning=FALSE, message=FALSE}
+#Load packages
 library(tidyverse)
 library(readr)
 library(dplyr)
 library(stringr)
 library(data.table)
+library(broom)
+library(gghighlight)
 ```
 
-```{r load data, warning=FALSE, message = FALSE}
-csv21 <- read_csv("Data/cfb21.csv")
+```{r load data, warning=FALSE, message=FALSE}
+#Load CSVs and Initial Data Cleaning
 coach13 <- read_csv("Data/2013_Coaches.csv")
 coach14 <- read_csv("Data/2014_Coaches.csv")
 coach15 <- read_csv("Data/2015_Coaches.csv")
@@ -96,13 +99,20 @@ cfb21 <- read_csv("Data/cfb21.csv") %>%
   separate(col = "Team", into = "Team", sep = " [(]") 
 ```
 
-``` {r edit data} 
+``` {r edit data, warning=FALSE, message=FALSE} 
+#Combine datasets to make one big dataset
 names(cfb21) <- make.names(names(cfb21), unique=TRUE)
-cfb_data <- bind_rows(cfb13, cfb14, cfb15, cfb16, cfb17, cfb18, cfb19, cfb20, cfb21)
-coach_data <- bind_rows(coach13, coach14, coach15, coach16, coach17, coach18, coach19, coach20, coach21)
-head(coach_data)
+cfb_data <- bind_rows(cfb13, cfb14, cfb15, cfb16, cfb17, cfb18, cfb19, cfb20,
+                      cfb21)
+coach_data <- bind_rows(coach13, coach14, coach15, coach16, coach17, coach18,
+                        coach19, coach20, coach21)
 names(coach_data)[3] <- "Team"
-cfb_data <- cfb_data %>% select(-c("...41", "Kickoff.Return.Def.Rank", "Opp.Kickoff.Returns", "Kickoff.Touchbacks", "Opponent.Kickoff.Return.Yards", "Opp.Kickoff.Return.Touchdowns.Allowed", "Avg.Yards.per.Kickoff.Return.Allowed", "Win.Loss", "NA.", "Interceptions.Thrown.y"))
+cfb_data <- cfb_data %>% 
+  select(-c("...41", "Kickoff.Return.Def.Rank", "Opp.Kickoff.Returns",
+            "Kickoff.Touchbacks", "Opponent.Kickoff.Return.Yards",
+            "Opp.Kickoff.Return.Touchdowns.Allowed",
+            "Avg.Yards.per.Kickoff.Return.Allowed", "Win.Loss", "NA.",
+            "Interceptions.Thrown.y"))
 coach_data <- coach_data %>% 
   filter(W + L > 7)
 cfb_data[cfb_data == "App State"] <- "Appalachian State"
@@ -155,7 +165,11 @@ coach_data[coach_data == "Pitt"] <- "Pittsburgh"
 coach_data[coach_data == "Miami (FL)"] <- "Miami_FL"
 coach_data[coach_data == "Miami (OH)"] <- "Miami_OH"
 big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>% 
-  select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed, Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns, Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
+  select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed,
+           Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns,
+           Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, 
+           Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed,
+           Touchdowns.Allowed))
 ```
 
 # Modeling and Data Analysis
