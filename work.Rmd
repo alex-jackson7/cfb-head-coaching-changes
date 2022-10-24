@@ -13,7 +13,7 @@ in the last ten seasons Our goal was to measure the impact that first year head 
 
 We started by gathering data from https://www.sports-reference.com/cfb/ which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with merge conflicts with the two datasets, we were able to combine our two datasets into one big dataset with the team and coach data.
 
-```{r load packages, echo=FALSE}
+```{r load packages}
 library(tidyverse)
 library(readr)
 library(dplyr)
@@ -103,8 +103,6 @@ coach_data <- bind_rows(coach13, coach14, coach15, coach16, coach17, coach18, co
 head(coach_data)
 names(coach_data)[3] <- "Team"
 cfb_data <- cfb_data %>% select(-c("...41", "Kickoff.Return.Def.Rank", "Opp.Kickoff.Returns", "Kickoff.Touchbacks", "Opponent.Kickoff.Return.Yards", "Opp.Kickoff.Return.Touchdowns.Allowed", "Avg.Yards.per.Kickoff.Return.Allowed", "Win.Loss", "NA.", "Interceptions.Thrown.y"))
-#cfb_data$Conference <-gsub(")","",as.character(cfb_data$Conference))
-#cfb_data[(cfb_data$Team == "Miami") & (cfb_data$Conference == "OH "), "Team"] <- "Miami (OH)" #need to figure out miami
 coach_data <- coach_data %>% 
   filter(W + L > 7)
 cfb_data[cfb_data == "App State"] <- "Appalachian State"
@@ -160,12 +158,14 @@ big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>%
   select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed, Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns, Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed, Touchdowns.Allowed))
 ```
 
+# Modeling and Data Analysis
+
 ```{r data analysis}
 new_coach = c()
 big_data <- big_data %>% 
   arrange(Team, Year)
 loop_data <- big_data %>% 
-    group_by(Team) 
+    group_by(Team)
 for (i in 2:nrow(big_data)){
   if ((big_data$Team[i] == big_data$Team[i-1]) & (big_data$Coach[i] !=
                                                   big_data$Coach[i-1])){
@@ -192,16 +192,19 @@ big_data <-
          lastyr_pct = lag(Pct, n = 1, default = NA),
          lastyr_TD.allowed = lag(Off.TDs.Allowed, n = 1, default = NA),
          touchdown_difference = Touchdowns - lastyr_TD,
+         win_pct_difference = Pct - lastyr_pct,
+         turnover_difference = Turnover.Margin - lastyr_TOmargin,
          delta_TD = Touchdowns - lastyr_TD,
          delta_pct = Pct - lastyr_pct,
          delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed) %>% 
   filter(Conf %in% c("ACC", "Big Ten", "Big 12", "Pac-12", "SEC")) %>% 
   filter(Year != 2013)
   
-  
 lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
 summary(lm.1)
 ```
+
+# Visualizations
 
 ```{r eda}
 big_data %>% 
@@ -216,12 +219,24 @@ big_data %>%
   group_by(new_coach) %>% 
   ggplot(aes(x = new_coach, y = touchdown_difference)) +
   geom_boxplot() +
-  labs(title = "Touchdown Difference from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Touchdown Difference")
+  labs(title = "Touchdown Differencial from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Touchdown Difference")
+
+big_data %>% 
+  group_by(new_coach) %>% 
+  ggplot(aes(x = new_coach, y = win_pct_difference)) +
+  geom_boxplot() +
+  labs(title = "Win Percentage Difference from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Win Pct Difference")
   
+big_data %>% 
+  group_by(new_coach) %>% 
+  ggplot(aes(x = new_coach, y = turnover_difference)) +
+  geom_boxplot() +
+  labs(title = "Turnover Differencial from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Turnover Difference")
 ```
 
+# Limitations and Future Research
 
-
+While this project allowed us a glimpse into the impact that first year head coaches have on a college football program, there were many limitations to our research that we would try to fix. First of all, college football hires happen in many different ways and at various points of the year. While some new head coaches take over in the middle of the season or even before one bowl game, most coaches have an entire offseason to get used to things in their new position. Because of these discrepancies, we only considered first year coaches who coached at least six games, meaning any coach who took over late in the season didn't count in our model and their first "official" season in our model was their first season in which they coached eight games. Next, we realized there are different reasons for coach hires and departures and it's hard to treat them all the same. For example, if a really good mid-major coach leaves for a power five school, that coach usually takes over for a struggling power five team with expectations to do better than recent years. However, the program they're leaving usually has to settle for a worse coach and has lower expectations than the power five team who hired the new coach. Because of this, we tried aggregating our results to just power 5 or group of 5 teams, but there are still many different teams with different histories and definitions of success which makes it very hard to see any noticeable results. Lastly, we realized it was hard to analyze any results for just a coach's first year as rebuilds are generally a process that takes multiple years. This also relates to the problem regarding mid-season hires and when a coach's first "official" season is. Studying the impact of hiring a coach mid-season vs. after the season is over could be another potential area to look at if we were to keep exploring.
 
 
 
