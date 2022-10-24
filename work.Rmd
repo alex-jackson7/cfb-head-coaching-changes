@@ -6,12 +6,11 @@ output: "html_document"
 
 # Introduction
 
-Our project examines NCAA Division 1 football teams who made head coaching changes 
-in the last ten seasons Our goal was to measure the impact that first year head coaches have during their first season with a new team and compare it to the state of the team prior to their hiring. Our project was inspired by Duke's recent head coach hiring of Mike Elko after numerous sub-par seasons. 
+Our project examines NCAA Division 1 football teams who made head coaching changes in the last ten seasons. Our goal was to measure the impact that first year head coaches have during their first season with a new team and compare it to the state of the team prior to their hiring. Our project was inspired by the recent success Duke's football team has seen after the hiring of head coach Mike Elko after numerous sub-par seasons.
 
 # Data Gathering and Cleaning
 
-We started by gathering data from https://www.sports-reference.com/cfb/ which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with merge conflicts with the two datasets, we were able to combine our two datasets into one big dataset with the team and coach data.
+We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with merge conflicts with the two datasets, we were able to combine our two datasets into one big dataset with the team and coach data.
 
 ```{r load packages, warning=FALSE, message=FALSE}
 #Load packages
@@ -22,6 +21,7 @@ library(stringr)
 library(data.table)
 library(broom)
 library(gghighlight)
+library(gapminder)
 ```
 
 ```{r load data, warning=FALSE, message=FALSE}
@@ -99,7 +99,7 @@ cfb21 <- read_csv("Data/cfb21.csv") %>%
   separate(col = "Team", into = "Team", sep = " [(]") 
 ```
 
-``` {r edit data, warning=FALSE, message=FALSE} 
+```{r edit data, warning=FALSE, message=FALSE}
 #Combine datasets to make one big dataset
 names(cfb21) <- make.names(names(cfb21), unique=TRUE)
 cfb_data <- bind_rows(cfb13, cfb14, cfb15, cfb16, cfb17, cfb18, cfb19, cfb20,
@@ -166,10 +166,10 @@ coach_data[coach_data == "Miami (FL)"] <- "Miami_FL"
 coach_data[coach_data == "Miami (OH)"] <- "Miami_OH"
 big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>% 
   select(c(Team, Coach, W, L, Pct, Year, Conf, Total.Points, Points.Allowed,
-           Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns,
-           Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, 
-           Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed,
-           Touchdowns.Allowed))
+          Off.Rank, Off.Yards.Play, Turnover.Margin, Def.Rank, Touchdowns,
+          Penalties, Penalty.Yards.Per.Game, Yards.Play.Allowed, 
+          Off.TDs.Allowed, Scoring.Off.Rank, Avg.Points.per.Game.Allowed,
+          Touchdowns.Allowed))
 ```
 
 # Modeling and Data Analysis
@@ -227,20 +227,24 @@ big_data %>%
   scale_x_continuous(breaks = seq(0, 150, 10))+
   scale_y_continuous(breaks = seq(0, 150, 10)) +
   geom_vline(xintercept = 65, linetype ="dashed")+
-  geom_hline(yintercept = 65,  linetype ="dashed")
+  geom_hline(yintercept = 65, linetype ="dashed")
 
 big_data %>% 
   group_by(new_coach) %>% 
   ggplot(aes(x = new_coach, y = touchdown_difference)) +
   geom_boxplot() +
-  labs(title = "Touchdown Differencial from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Touchdown Difference")
+  labs(title = "Touchdown Differencial from Previous Year", 
+       subtitle = "Grouped by New Head Coach (1) or Returning (0)", 
+       x = "New Coach", y = "Touchdown Difference")
 
 big_data %>% 
   group_by(new_coach) %>% 
   ggplot(aes(x = new_coach, y = win_pct_difference)) +
   geom_boxplot() +
-  labs(title = "Win Percentage Difference from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Win Pct Difference")
-  
+  labs(title = "Win Percentage Difference from Previous Year", 
+       subtitle = "Grouped by New Head Coach (1) or Returning (0)", 
+       x = "New Coach", y = "Win Pct Difference")
+
 big_data %>% 
   group_by(new_coach) %>% 
   ggplot(aes(x = new_coach, y = turnover_difference)) +
@@ -248,11 +252,49 @@ big_data %>%
   labs(title = "Turnover Differencial from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Turnover Difference")
 ```
 
+```{r}
+test_data <- big_data %>% 
+  mutate(include = case_when(
+    new_coach == 1 ~ 1,
+    lead(new_coach, 1) == 1 ~ 1,
+    T ~ 0
+  )) %>% 
+  filter(include == 1) %>%
+  mutate(group_no = 0)
+
+for(i in seq(1, nrow(test_data), 2)){
+  test_data[i, 34] = i
+  test_data[i+1, 34] = i
+  i = i+2
+}
+
+test_data %>% 
+  ggplot(aes(x=Off.Rank, y=Def.Rank, color = new_coach)) + 
+  geom_point(aes(fill = new_coach), size = 1) +
+  geom_line(aes(group = group_no), 
+              color = "gray",
+              alpha = .5,
+              arrow = arrow(type = "closed",
+                    length = (unit(.0075, "inches")))) +
+  scale_x_continuous(breaks = seq(0, 150, 10)) +
+  scale_y_continuous(breaks = seq(0, 150, 10)) +
+  geom_vline(xintercept = 65, linetype ="dashed") +
+  geom_hline(yintercept = 65, linetype ="dashed")
+
+
+```
+
+
+# Discussion
+
+Both the above visualizations and regressions show that there is a very weak, or even non-existent, relationship between a team having a new coach and performance versus the previous year. Again, this is not surprising given the two conflicting ways a new coach is needed in a program: the old coach was bad enough to get fired, or was good enough that he was poached by another program. We discuss this more in limitations, but the difficulties of transforming a team in just 1 year should be obvious, so it is again unsurprising that we don't see particularly noteworthy changes year-to-year with new coaches versus off seasons without a coaching transition. 
+
 # Limitations and Future Research
 
-While this project allowed us a glimpse into the impact that first year head coaches have on a college football program, there were many limitations to our research that we would try to fix. First of all, college football hires happen in many different ways and at various points of the year. While some new head coaches take over in the middle of the season or even before one bowl game, most coaches have an entire offseason to get used to things in their new position. Because of these discrepancies, we only considered first year coaches who coached at least six games, meaning any coach who took over late in the season didn't count in our model and their first "official" season in our model was their first season in which they coached eight games. Next, we realized there are different reasons for coach hires and departures and it's hard to treat them all the same. For example, if a really good mid-major coach leaves for a power five school, that coach usually takes over for a struggling power five team with expectations to do better than recent years. However, the program they're leaving usually has to settle for a worse coach and has lower expectations than the power five team who hired the new coach. Because of this, we tried aggregating our results to just power 5 or group of 5 teams, but there are still many different teams with different histories and definitions of success which makes it very hard to see any noticeable results. Lastly, we realized it was hard to analyze any results for just a coach's first year as rebuilds are generally a process that takes multiple years. This also relates to the problem regarding mid-season hires and when a coach's first "official" season is. Studying the impact of hiring a coach mid-season vs. after the season is over could be another potential area to look at if we were to keep exploring.
+While this project allowed us a glimpse into the impact that first year head coaches have on a college football program, there were many limitations to our research that we would try to fix. First of all, college football hires happen in many different ways and at various points of the year. While some new head coaches take over in the middle of the season or even before one bowl game, most coaches have an entire off-season to get used to things in their new position. Because of these discrepancies, we only considered first year coaches who coached at least six games, meaning any coach who took over late in the season didn't count in our model and their first "official" season in our model was their first season in which they coached eight games.
 
+Next, we realized there are different reasons coaches depart teams and it is likely unfair to treat them all the same. For example, if a successful mid-major coach leaves for a power five school, that coach usually takes over for a struggling power five team with expectations to do better than recent years. However, the program they're leaving usually has to settle for a worse coach and has lower expectations than the power five team who hired the new coach. Because of this, we tried aggregating our results to just power 5 or group of 5 teams with the belief that these programs more rarely have successful coaches poached by other programs, but there are still many different teams with different histories and definitions of success which makes it very hard to see any noticeable results.
 
+Lastly, we realized only analyze a coach's first year on the job likely does not reflect the whole picture, as rebuilds are generally a process that takes multiple years. Given that head coaching changes often accompany other large organizational changes, a new coach's first year is unlikely to be a perfect reflection of their abilities. Many coaches who would prove to be very successful in a program inherent dysfunctional systems and poor recruits (after all, that is more than likely why the previous coach didn't return), which are not things that can can be fixed in just one year. This also relates to the problem regarding mid-season hires and when a coach's first "official" season is. Studying the impact of hiring a coach mid-season vs. after the season is over could be another potential area to look at if we were to keep exploring.
 
-
-
+Future projects would also explore how the background of new hires may determine success. It is a common idea that defensive coordinators often perform worse as head coaches than other head coaches or offensive-minded coaches, so it would be interesting to see if this claim holds any merit.
