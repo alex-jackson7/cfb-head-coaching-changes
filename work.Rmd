@@ -307,6 +307,10 @@ test_data %>%
   geom_hline(yintercept = 65, linetype ="dashed")
 ```
 
+We can see from the boxplots that there is a small difference when comparing the change in win percentage, touchdown differential, and turnover differential from year to year for new head coaches vs. returning head coaches. As we discussed before, this is to be expected when comparing all new head coaches to all previous head coaches. In the next part, we will compare new head coaches only to head coaches in their final year (before they either left or got fired).
+
+# Further Modeling
+
 ```{r}
 lm.1t <- lm(delta_pct ~ new_coach, data = test_data)
 lm.2t <- lm(delta_TD.allowed ~ new_coach, data = test_data)
