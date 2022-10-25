@@ -209,16 +209,22 @@ big_data <-
          lastyr_TOmargin = lag(Turnover.Margin, n = 1, default = NA),
          lastyr_pct = lag(Pct, n = 1, default = NA),
          lastyr_TD.allowed = lag(Off.TDs.Allowed, n = 1, default = NA),
+         lastyr_Offrank = lag(Off.Rank, n = 1, default = NA),
+         lastyr_Defrank = lag(Def.Rank, n = 1, default = NA),
          delta_TOmargin = Turnover.Margin - lastyr_TOmargin,
          delta_TD = Touchdowns - lastyr_TD,
          delta_pct = Pct - lastyr_pct,
-         delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed) %>% 
+         delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed,
+         delta_Offrank = Off.Rank - lastyr_Offrank,
+         delta_Defrank = Def.Rank - lastyr_Defrank) %>% 
   filter(Year != 2013)
   
 lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
 lm.2 <- lm(delta_TD.allowed ~ new_coach, data = big_data)
 lm.3 <- lm(delta_TD ~ new_coach, data = big_data)
 lm.4 <- lm(delta_TOmargin ~ new_coach, data = big_data)
+lm.5 <- lm(delta_Offrank ~ new_coach, data = big_data)
+lm.6 <- lm(delta_Defrank ~ new_coach, data = big_data)
 tidy(lm.1) %>% 
   kable(digits = 3)
 tidy(lm.2) %>% 
@@ -227,9 +233,13 @@ tidy(lm.3) %>%
   kable(digits = 3)
 tidy(lm.4) %>% 
   kable(digits = 3)
+tidy(lm.5) %>% 
+  kable(digits = 3)
+tidy(lm.6) %>% 
+  kable(digits = 3)
 ```
 
-Our model outputs above do not show much about `new_coach`, but it does show that `new_coach` is significant in predicting the change in turnovers using an $\alpha$-level of 0.05. The coefficient is negative, which means that teams with new coaches are statistically more likely to see a regression in touchdowns from the year before than teams with returning coaches. However, there are many outside lurking variables as well as numerous different types of head coaching changes as we mention in the discussion. For this reason, it is very hard to group every new coaching observation together and even harder to make generalized predictions about teams using only whether or not they have a new head coach. Still, it makes sense that teams with a new head coach would score less on average than teams without a new head coach.
+Our model outputs above do not show much about `new_coach`, but it does show that `new_coach` is significant in predicting the change in touchdowns scored using an $\alpha$-level of 0.05. The coefficient is negative, which means that teams with new coaches are statistically more likely to see a regression in touchdowns from the year before than teams with returning coaches. However, there are many outside lurking variables as well as numerous different types of head coaching changes as we mention in the discussion. For this reason, it is very hard to group every new coaching observation together and even harder to make generalized predictions about teams using only whether or not they have a new head coach. Still, it makes sense that teams with a new head coach would score less on average than teams without a new head coach.
 
 # Visualizations
 
@@ -297,6 +307,29 @@ test_data %>%
   geom_hline(yintercept = 65, linetype ="dashed")
 ```
 
+```{r}
+lm.1t <- lm(delta_pct ~ new_coach, data = test_data)
+lm.2t <- lm(delta_TD.allowed ~ new_coach, data = test_data)
+lm.3t <- lm(delta_TD ~ new_coach, data = test_data)
+lm.4t <- lm(delta_TOmargin ~ new_coach, data = test_data)
+lm.5t <- lm(delta_Offrank ~ new_coach, data = test_data)
+lm.6t <- lm(delta_Defrank ~ new_coach, data = test_data)
+tidy(lm.1t) %>% 
+  kable(digits = 3)
+tidy(lm.2t) %>% 
+  kable(digits = 3)
+tidy(lm.3t) %>% 
+  kable(digits = 3)
+tidy(lm.4t) %>% 
+  kable(digits = 3)
+tidy(lm.5t) %>% 
+  kable(digits = 3)
+tidy(lm.6t) %>% 
+  kable(digits = 3)
+```
+
+When we test for significance using only observations where there was a new coach and the season before, there is even less of a relationship between `new_coach` and the various delta values. This could potentially be a good sign as this shows that while new coaches generally do slightly worse than the coach from the previous season, they do not perform as bad compared to looking at all returning coaches and not just ones who left or got fired. This issue of coaches leaving vs. getting fired is something we will discuss later, but this is another example of the various technicalities regarding new coaches that we have discovered as 
+
 # Discussion
 
 Both the above visualizations and regressions show that there is a very weak, or even non-existent, relationship between a team having a new coach and performance versus the previous year. Again, this is not surprising given the two conflicting ways a new coach is needed in a program: the old coach was bad enough to get fired, or was good enough that he was poached by another program. We discuss this more in limitations, but the difficulties of transforming a team in just 1 year should be obvious, so it is again unsurprising that we don't see particularly noteworthy changes year-to-year with new coaches versus off seasons without a coaching transition. 
@@ -305,7 +338,7 @@ Both the above visualizations and regressions show that there is a very weak, or
 
 While this project allowed us a glimpse into the impact that first year head coaches have on a college football program, there were many limitations to our research that we would try to fix. First of all, college football hires happen in many different ways and at various points of the year. While some new head coaches take over in the middle of the season or even before one bowl game, most coaches have an entire off-season to get used to things in their new position. Because of these discrepancies, we only considered first year coaches who coached at least six games, meaning any coach who took over late in the season didn't count in our model and their first "official" season in our model was their first season in which they coached eight games.
 
-Next, we realized there are different reasons coaches depart teams and it is likely unfair to treat them all the same. For example, if a successful mid-major coach leaves for a power five school, that coach usually takes over for a struggling power five team with expectations to do better than recent years. However, the program they're leaving usually has to settle for a worse coach and has lower expectations than the power five team who hired the new coach. Because of this, we tried aggregating our results to just power 5 or group of 5 teams with the belief that these programs more rarely have successful coaches poached by other programs, but there are still many different teams with different histories and definitions of success which makes it very hard to see any noticeable results.
+Next, we realized there are different reasons coaches depart teams and it is likely unfair to treat them all the same. There is a very big distinction between a coach's last season being because he got fired vs. because he took a better job based on his success. On the other hand, vacated jobs can either be filled by coaches on the rise or a coach who is a replacement for a recent hire elsewhere. For example, if a successful mid-major coach leaves for a power five school, that coach usually takes over for a struggling power five team with expectations to do better than recent years. However, the program they're leaving usually has to settle for a worse coach and has lower expectations than the power five team who hired the new coach. Because of this, we tried aggregating our results to just power 5 or group of 5 teams with the belief that these programs more rarely have successful coaches poached by other programs, but there are still many different teams with different histories and definitions of success which makes it very hard to see any noticeable results. While it was difficult to classify these distinctions with the data we have, this is something that would be interesting to look at in the future.
 
 Lastly, we realized only analyze a coach's first year on the job likely does not reflect the whole picture, as rebuilds are generally a process that takes multiple years. Given that head coaching changes often accompany other large organizational changes, a new coach's first year is unlikely to be a perfect reflection of their abilities. Many coaches who would prove to be very successful in a program inherent dysfunctional systems and poor recruits (after all, that is more than likely why the previous coach didn't return), which are not things that can can be fixed in just one year. This also relates to the problem regarding mid-season hires and when a coach's first "official" season is. Studying the impact of hiring a coach mid-season vs. after the season is over could be another potential area to look at if we were to keep exploring.
 
