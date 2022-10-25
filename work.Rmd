@@ -6,11 +6,11 @@ output: "html_document"
 
 # Introduction
 
-Our project examines NCAA Division 1 football teams who made head coaching changes in the last ten seasons. Our goal is to measure the impact that first year head coaches have during their first season with a new team. We plan to do this by comparing various measures of success such as win percentage, touchdown differential, turnover differential, and offensive/defensive rank to the previous year under the old head coach Our project is inspired by the recent success Duke's football team has seen after the hiring of head coach Mike Elko after numerous sub-par seasons.
+Our project examines NCAA Division 1 football teams who made head coaching changes in the last ten seasons. Our goal is to measure the impact that first year head coaches have during their first season with a new team. We plan to do this by comparing various measures of success such as win percentage, touchdown differential, turnover differential, and offensive/defensive rank to the season before under the previous head coach. Our project is inspired by the recent success Duke's football team has seen after the hiring of head coach Mike Elko after numerous sub-par seasons.
 
 # Data Gathering and Cleaning
 
-We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data on both teams and coaches. We downloaded the csv's of every college football season dating back to 2013 as well as the head coach data dating back to 2013 as well. After cleaning our datasets to deal with potential name issues that would result in difficulties merging them, we were able to combine our two datasets into one big dataset with the team and coach data.
+We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data dating back to 2013 on both teams and coaches. We downloaded the csv's of every college football season available as well as all of the head coach data that was available. After cleaning our datasets to eliminate potential conficts with joining the data, we were able to combine our datasets of different seasons into two main datasets with all of the team data and all of the coach data. Then, we were able to join the two new datasets (`coach_data` and `cfb_data`) into one big dataset (`big_data`) with all of the team data and coach's record from each season dating back to 2013.
 
 ```{r load packages, warning=FALSE, message=FALSE}
 #Load packages
