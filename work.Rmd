@@ -23,6 +23,7 @@ library(data.table)
 library(broom)
 library(gghighlight)
 library(gapminder)
+library(patchwork)
 ```
 
 ```{r load data, warning=FALSE, message=FALSE}
@@ -175,7 +176,9 @@ big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>%
 
 # Modeling and Data Analysis
 
-```{r data analysis}
+To examine the impact of first year coaches, we first need to identify seasons in which the head coach is in his first year. To do this, we created a for loop that checks if the previous observation is of the same team and a different coach. Because the observations are ordered by school name and then year, we know that two observations of the same school indicate back-to-back seasons. If the previous row was the same team and a different head coach, then we assign the indicator variable `new_coach` to be 1. If the coach is the same as the previous year or if the observation above is a different team (there is no older data for the team being examined), then `new_coach` is assigned a value of 0. After we identified rows that were back-to-back seasons, we created lag variables for certain statistics from the season before including touchdowns, turnover differential, win percentage, touchdowns allowed, and offensive and defensive rank. Then, each observation that also had data from the previous season contained the statistics of the first season under the new head coach as well as the statistics from the final season of the old head coach. For the statistics we were considering, we created `delta` variables that measure the change in the statistic from previous season. For example, `delta_pct` is the winning percentage of the first season under the new head coach minus the winning percentage of the last season under the old coach. We then created linear regression models to test if `new_coach` is a significant predictor on any of the `delta` variables.
+
+```{r data analysis, message = FALSE, warning = FALSE}
 new_coach = c()
 big_data <- big_data %>% 
   arrange(Team, Year)
@@ -210,7 +213,6 @@ big_data <-
          delta_TD = Touchdowns - lastyr_TD,
          delta_pct = Pct - lastyr_pct,
          delta_TD.allowed = Off.TDs.Allowed - lastyr_TD.allowed) %>% 
-  filter(Conf %in% c("ACC", "Big Ten", "Big 12", "Pac-12", "SEC")) %>% 
   filter(Year != 2013)
   
 lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
@@ -227,16 +229,20 @@ tidy(lm.4) %>%
   kable(digits = 3)
 ```
 
+Our model outputs above do not show much about `new_coach`, but it does show that `new_coach` is significant in predicting the change in turnovers using an $\alpha$-level of 0.05. The coefficient is negative, which means that teams with new coaches are statistically more likely to see a regression in touchdowns from the year before than teams with returning coaches. However, there are many outside lurking variables as well as numerous different types of head coaching changes as we mention in the discussion. For this reason, it is very hard to group every new coaching observation together and even harder to make generalized predictions about teams using only whether or not they have a new head coach. Still, it makes sense that teams with a new head coach would score less on average than teams without a new head coach.
+
 # Visualizations
 
 ```{r eda}
 big_data %>% 
-  ggplot(aes(x=Off.Rank, y=Def.Rank)) +geom_point(color = "red") +
+  ggplot(aes(x=Off.Rank, y=Def.Rank)) +
+  geom_point(color = "red") +
   gghighlight::gghighlight(new_coach == 1) +
-  scale_x_continuous(breaks = seq(0, 150, 10))+
+  scale_x_continuous(breaks = seq(0, 150, 10)) +
   scale_y_continuous(breaks = seq(0, 150, 10)) +
-  geom_vline(xintercept = 65, linetype ="dashed")+
-  geom_hline(yintercept = 65, linetype ="dashed")
+  geom_vline(xintercept = 65, linetype ="dashed") +
+  geom_hline(yintercept = 65, linetype ="dashed") +
+  labs(title = "Offensive and Defensive Rank", subtitle = "Highlighted by New Head Coach", x = "Offensive Rank", y = "Defensive Rank")
 
 big_data %>% 
   group_by(new_coach) %>% 
@@ -262,35 +268,34 @@ big_data %>%
 ```
 
 ```{r}
-#test_data <- big_data %>% 
-  #mutate(include = case_when(
-    #new_coach == 1 ~ 1,
-    #lead(new_coach, 1) == 1 ~ 1,
-    #T ~ 0
-  #)) %>% 
-  #filter(include == 1) %>%
-  #mutate(group_no = 0)
+test_data <- big_data %>% 
+  mutate(include = case_when(
+    new_coach == 1 ~ 1,
+    lead(new_coach, 1) == 1 ~ 1,
+    T ~ 0
+  )) %>% 
+  filter(include == 1) %>%
+  mutate(group_no = 0)
 
-#for(i in seq(1, nrow(test_data), 2)){
-  #test_data[i, 34] = i
-  #test_data[i+1, 34] = i
-  #i = i+2
-#}
+for(i in seq(1, nrow(test_data), 2)){
+  test_data[i, 32] = i
+  test_data[i+1, 32] = i
+  i = i+2
+}
 
-#test_data %>% 
-  #ggplot(aes(x=Off.Rank, y=Def.Rank, color = new_coach)) + 
-  #geom_point(aes(fill = new_coach), size = 1) +
-  #geom_line(aes(group = group_no), 
-              #color = "gray",
-              #alpha = .5,
-              #arrow = arrow(type = "closed",
-                    #length = (unit(.0075, "inches")))) +
-  #scale_x_continuous(breaks = seq(0, 150, 10)) +
-  #scale_y_continuous(breaks = seq(0, 150, 10)) +
-  #geom_vline(xintercept = 65, linetype ="dashed") +
-  #geom_hline(yintercept = 65, linetype ="dashed")
+test_data %>% 
+  ggplot(aes(x=Off.Rank, y=Def.Rank, color = new_coach)) + 
+  geom_point(aes(fill = new_coach), size = 1) +
+  geom_line(aes(group = group_no), 
+              color = "gray",
+              alpha = .5,
+              arrow = arrow(type = "closed",
+                    length = (unit(.0075, "inches")))) +
+  scale_x_continuous(breaks = seq(0, 150, 10)) +
+  scale_y_continuous(breaks = seq(0, 150, 10)) +
+  geom_vline(xintercept = 65, linetype ="dashed") +
+  geom_hline(yintercept = 65, linetype ="dashed")
 ```
-
 
 # Discussion
 
