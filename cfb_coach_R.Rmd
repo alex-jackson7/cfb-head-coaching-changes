@@ -1,7 +1,9 @@
 ---
 title: "Measuring the Impact of NCAA Football Head Coach Changes"
-author: "By: Jack Miller, Alex Jackson, and Bryce Grove" 
-output: "html_document"
+author: 'By: Jack Miller, Alex Jackson, and Bryce Grove'
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 # Introduction
@@ -10,7 +12,7 @@ Our project examines NCAA Division 1 football teams who made head coaching chang
 
 # Data Gathering and Cleaning
 
-We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data dating back to 2013 on both teams and coaches. We downloaded the csv's of every college football season available as well as all of the head coach data that was available. After cleaning our datasets to eliminate potential conficts with joining the data, we were able to combine our datasets of different seasons into two main datasets with all of the team data and all of the coach data. Then, we were able to join the two new datasets (`coach_data` and `cfb_data`) into one big dataset (`big_data`) with all of the team data and coach's record from each season dating back to 2013.
+We started by gathering data from <https://www.sports-reference.com/cfb/> which has college football data dating back to 2013 on both teams and coaches. We downloaded the csv's of every college football season available as well as all of the head coach data that was available. After cleaning our datasets to eliminate potential conflicts with joining the data, we were able to combine our datasets of different seasons into two main datasets with all of the team data and all of the coach data. Then, we were able to join the two new datasets (`coach_data` and `cfb_data`) into one big dataset (`big_data`) with all of the team data and coach's record from each season dating back to 2013.
 
 ```{r load packages, warning=FALSE, message=FALSE}
 #Load packages
@@ -179,29 +181,29 @@ big_data <- inner_join(cfb_data, coach_data, by = c("Team", "Year")) %>%
 To examine the impact of first year coaches, we first need to identify seasons in which the head coach is in his first year. To do this, we created a for loop that checks if the previous observation is of the same team and a different coach. Because the observations are ordered by school name and then year, we know that two observations of the same school indicate back-to-back seasons. If the previous row was the same team and a different head coach, then we assign the indicator variable `new_coach` to be 1. If the coach is the same as the previous year or if the observation above is a different team (there is no older data for the team being examined), then `new_coach` is assigned a value of 0. After we identified rows that were back-to-back seasons, we created lag variables for certain statistics from the season before including touchdowns, turnover differential, win percentage, touchdowns allowed, and offensive and defensive rank. Then, each observation that also had data from the previous season contained the statistics of the first season under the new head coach as well as the statistics from the final season of the old head coach. For the statistics we were considering, we created `delta` variables that measure the change in the statistic from previous season. For example, `delta_pct` is the winning percentage of the first season under the new head coach minus the winning percentage of the last season under the old coach. We then created linear regression models to test if `new_coach` is a significant predictor on any of the `delta` variables.
 
 ```{r data analysis, message = FALSE, warning = FALSE}
+#Determining new coaches
 new_coach = c()
 big_data <- big_data %>% 
   arrange(Team, Year)
-loop_data <- big_data %>% 
-    group_by(Team)
 for (i in 2:nrow(big_data)){
-  if ((big_data$Team[i] == big_data$Team[i-1]) & (big_data$Coach[i] !=
-                                                  big_data$Coach[i-1])){
+  if ((big_data$Team[i] == big_data$Team[i-1]) & 
+      (big_data$Coach[i] != big_data$Coach[i-1])){
     new_coach = append(new_coach, 1)
   }
   else{
     new_coach = append(new_coach, 0)
   }
 }
-
+#Making new_coach a factor variable
 big_data <- big_data[-1, ] %>% 
   cbind(new_coach)
 big_data <- big_data %>% 
   mutate(new_coach = as.factor(new_coach))
 
-old_data <- big_data %>% select(c("Turnover.Margin", "Touchdowns", "Scoring.Off.Rank"))
+old_data <- big_data %>% select(c("Turnover.Margin", "Touchdowns",
+                                  "Scoring.Off.Rank"))
 new_data <- paste("lag", old_data, sep = ".")
-
+#Create lag variables from last year stats, delta variables
 big_data <-
   big_data %>% 
   group_by(Team) %>% 
@@ -218,7 +220,7 @@ big_data <-
          delta_Offrank = Off.Rank - lastyr_Offrank,
          delta_Defrank = Def.Rank - lastyr_Defrank) %>% 
   filter(Year != 2013)
-  
+#Linear models to test significance of new_coach on different stats
 lm.1 <- lm(delta_pct ~ new_coach, data = big_data)
 lm.2 <- lm(delta_TD.allowed ~ new_coach, data = big_data)
 lm.3 <- lm(delta_TD ~ new_coach, data = big_data)
@@ -243,7 +245,17 @@ Our model outputs above do not show much about `new_coach`, but it does show tha
 
 # Visualizations
 
-```{r eda}
+```{r eda, fig.height=5, fig.width=7.5, warning=FALSE, message=FALSE}
+annotations <- data.frame(
+        xpos = c(-Inf,-Inf,Inf,Inf),
+        ypos =  c(-Inf, Inf,-Inf,Inf),
+        annotateText = c("Good Offense, Good Defense",
+                         "Good Offense, Bad Defense",
+                         "Good Offense, Bad Defense",
+                         "Bad Offense, Bad Defense"),
+        hjustvar = c(0,0,1,1) ,
+        vjustvar = c(0,1,0,1))
+
 big_data %>% 
   ggplot(aes(x=Off.Rank, y=Def.Rank)) +
   geom_point(color = "red") +
@@ -252,7 +264,11 @@ big_data %>%
   scale_y_continuous(breaks = seq(0, 150, 10)) +
   geom_vline(xintercept = 65, linetype ="dashed") +
   geom_hline(yintercept = 65, linetype ="dashed") +
-  labs(title = "Offensive and Defensive Rank", subtitle = "Highlighted by New Head Coach", x = "Offensive Rank", y = "Defensive Rank")
+  labs(title = "Offensive and Defensive Rank", 
+       subtitle = "Highlighted by New Head Coach", 
+       x = "Offensive Rank", y = "Defensive Rank") +
+  geom_text(data=annotations,
+            aes(x=xpos,y=ypos,hjust=hjustvar,vjust=vjustvar,label=annotateText))
 
 big_data %>% 
   group_by(new_coach) %>% 
@@ -274,7 +290,9 @@ big_data %>%
   group_by(new_coach) %>% 
   ggplot(aes(x = new_coach, y = delta_TOmargin)) +
   geom_boxplot() +
-  labs(title = "Turnover Differencial from Previous Year", subtitle = "Grouped by New Head Coach (1) or Returning (0)", x = "New Coach", y = "Turnover Difference")
+  labs(title = "Turnover Differencial from Previous Year", 
+       subtitle = "Grouped by New Head Coach (1) or Returning (0)", 
+       x = "New Coach", y = "Turnover Difference")
 ```
 
 ```{r}
@@ -292,19 +310,6 @@ for(i in seq(1, nrow(test_data), 2)){
   test_data[i+1, 32] = i
   i = i+2
 }
-
-test_data %>% 
-  ggplot(aes(x=Off.Rank, y=Def.Rank, color = new_coach)) + 
-  geom_point(aes(fill = new_coach), size = 1) +
-  geom_line(aes(group = group_no), 
-              color = "gray",
-              alpha = .5,
-              arrow = arrow(type = "closed",
-                    length = (unit(.0075, "inches")))) +
-  scale_x_continuous(breaks = seq(0, 150, 10)) +
-  scale_y_continuous(breaks = seq(0, 150, 10)) +
-  geom_vline(xintercept = 65, linetype ="dashed") +
-  geom_hline(yintercept = 65, linetype ="dashed")
 ```
 
 We can see from the boxplots that there is a small difference when comparing the change in win percentage, touchdown differential, and turnover differential from year to year for new head coaches vs. returning head coaches. As we discussed before, this is to be expected when comparing all new head coaches to all previous head coaches. In the next part, we will compare new head coaches only to head coaches in their final year (before they either left or got fired).
@@ -336,7 +341,7 @@ When we test for significance using only observations where there was a new coac
 
 # Discussion
 
-Both the above visualizations and regressions show that there is a very weak, or even non-existent, relationship between a team having a new coach and performance versus the previous year. Again, this is not surprising given the two conflicting ways a new coach is needed in a program: the old coach was bad enough to get fired, or was good enough that he was poached by another program. We discuss this more in limitations, but the difficulties of transforming a team in just 1 year should be obvious, so it is again unsurprising that we don't see particularly noteworthy changes year-to-year with new coaches versus off seasons without a coaching transition. 
+Both the above visualizations and regressions show that there is a very weak, or even non-existent, relationship between a team having a new coach and performance versus the previous year. Again, this is not surprising given the two conflicting ways a new coach is needed in a program: the old coach was bad enough to get fired, or was good enough that he was poached by another program. We discuss this more in limitations, but the difficulties of transforming a team in just one year should be obvious, so it is again unsurprising that we don't see particularly noteworthy changes year-to-year with new coaches versus off seasons without a coaching transition. 
 
 # Limitations and Future Research
 
