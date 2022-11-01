@@ -251,7 +251,7 @@ annotations <- data.frame(
         ypos =  c(-Inf, Inf,-Inf,Inf),
         annotateText = c("Good Offense, Good Defense",
                          "Good Offense, Bad Defense",
-                         "Good Offense, Bad Defense",
+                         "Bad Offense, Good Defense",
                          "Bad Offense, Bad Defense"),
         hjustvar = c(0,0,1,1) ,
         vjustvar = c(0,1,0,1))
